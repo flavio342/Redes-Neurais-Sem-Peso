@@ -16,10 +16,10 @@ hThree = [1,0,0,1,
           1,1,1,1,
           1,0,0,1]
 
-teste = [0,1,0,1,
-         0,1,0,0,
-         0,0,1,0,
-         1,0,1,0]
+teste = [1,0,0,1,
+         1,1,0,1,
+         1,0,1,1,
+         1,0,0,1]
 
 class Rede:
 
@@ -56,7 +56,7 @@ class Rede:
             
             neuronio.tabelaDeDados[indiceNaTabelaDeDados] += 1
 
-    def testeDeEntrada(self,entrada):
+    def testeDeEntrada(self,entrada,limiteDoBleaching):
 
         resultado = 0
 
@@ -66,8 +66,9 @@ class Rede:
                 coordenadaNaTabela += str(entrada[neuronio.indicesDeEntradas[i]])
 
             indiceNaTabelaDeDados = int(coordenadaNaTabela, 2)
-            
-            resultado += neuronio.tabelaDeDados[indiceNaTabelaDeDados]
+
+            if (neuronio.tabelaDeDados[indiceNaTabelaDeDados] > limiteDoBleaching):
+                resultado+=1
         
         print resultado
         print "\nTire suas proprias conclusoes, humano.\n\n"
@@ -80,10 +81,10 @@ rede.treinarRede(hOne)
 rede.treinarRede(hTwo)
 rede.treinarRede(hThree)
 
-rede.testeDeEntrada(hOne)
-rede.testeDeEntrada(hTwo)
-rede.testeDeEntrada(hThree)
-rede.testeDeEntrada(teste)
+rede.testeDeEntrada(hOne,0)
+rede.testeDeEntrada(hTwo,0)
+rede.testeDeEntrada(hThree,0)
+rede.testeDeEntrada(teste,0)
 
 
 
