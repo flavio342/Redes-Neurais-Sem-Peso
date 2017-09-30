@@ -1,25 +1,7 @@
 import numpy
 import random
-
-hOne = [1,0,0,1,
-        1,1,1,1,
-        1,0,0,1,
-        1,0,0,1]
-
-hTwo = [1,0,0,1,
-        1,0,0,1,
-        1,1,1,1,
-        1,0,0,1]
-
-hThree = [1,0,0,1,
-          1,1,1,1,
-          1,1,1,1,
-          1,0,0,1]
-
-teste = [1,0,0,1,
-         1,1,0,1,
-         1,0,1,1,
-         1,0,0,1]
+import math
+from process_input import *
 
 class Rede:
 
@@ -31,7 +13,7 @@ class Rede:
                 self.tabelaDeDados.append(0)
             self.indicesDeEntradas = indicesDeEntradas     
 
-    def __init__(self,nTotalDeEntradas,nEntradasPorNeuronio):
+    def __init__(self,nTotalDeEntradas,nEntradasPorNeuronio,label):
         entradas = []
         for i in range(nTotalDeEntradas):
             entradas.append(i)
@@ -45,12 +27,16 @@ class Rede:
             neuronio = self.Neuronio(indicesDeEntradasDoNeuronio)
             neuronios.append(neuronio)
         self.neuronios = neuronios
+        self.label = label
 
     def treinarRede(self, entrada):
         for neuronio in self.neuronios:
             coordenadaNaTabela = ""
             for i in range(len(neuronio.indicesDeEntradas)):
-                coordenadaNaTabela += str(entrada[neuronio.indicesDeEntradas[i]])
+                if entrada[neuronio.indicesDeEntradas[i]] > 0:
+                    coordenadaNaTabela += '1'
+                else:
+                    coordenadaNaTabela += '0'   
 
             indiceNaTabelaDeDados = int(coordenadaNaTabela, 2)
             
@@ -63,28 +49,84 @@ class Rede:
         for neuronio in self.neuronios:
             coordenadaNaTabela = ""
             for i in range(len(neuronio.indicesDeEntradas)):
-                coordenadaNaTabela += str(entrada[neuronio.indicesDeEntradas[i]])
+                if entrada[neuronio.indicesDeEntradas[i]] > 0:
+                    coordenadaNaTabela += '1'
+                else:
+                    coordenadaNaTabela += '0' 
 
             indiceNaTabelaDeDados = int(coordenadaNaTabela, 2)
 
             if (neuronio.tabelaDeDados[indiceNaTabelaDeDados] > limiteDoBleaching):
                 resultado+=1
         
-        print resultado
-        print "\nTire suas proprias conclusoes, humano.\n\n"
+        return resultado
+
+def criarRedes(nTotalDeEntradas,nEntradasPorNeuronio):
+
+    redes = {}
+    for i in range (0,10):
+        rede = { str(i): Rede(nTotalDeEntradas,nEntradasPorNeuronio,i) }
+        redes.update(rede)
+    
+    return redes
+
+def treinarRedes(redes):
+
+    training_data = list(read(dataset='training',path='.'))
+
+    for k in range(0,len(training_data)):
+        label, pixels = training_data[k]
+        pixelsArray = []
+        for i in range(0,pixels.shape[0]):
+            for j in range(0,pixels.shape[1]):
+                pixelsArray.append(pixels[i,j])
+        redes[str(label)].treinarRede(pixelsArray)
+        print 'rede ' + str(label) + ' treinada. n = ' + str(k)
+
+    return redes
+
+def testarRedes(redes,limiteDoBleaching):
+
+    testing_data = list(read(dataset='testing',path='.'))
+
+    numeroDeAnalises = 0
+    numeroDeAnalisesCorretas = 0
+
+    for k in range(0,len(testing_data)):
+        label, pixels = testing_data[k]
+        pixelsArray = []
+        for i in range(0,pixels.shape[0]):
+            for j in range(0,pixels.shape[1]):
+                pixelsArray.append(pixels[i,j])
+
+        melhorResultado = -1
+        labelDoMelhorResultado = -1
+        piorResultado = 10000000000
+        for x in range(0,len(redes)):
+            resultado = redes[str(x)].testeDeEntrada(pixelsArray,limiteDoBleaching)
+            if resultado > melhorResultado:
+                melhorResultado = resultado
+                labelDoMelhorResultado = redes[str(x)].label
+            if resultado < piorResultado:
+                piorResultado = resultado
+        
+        correto = 'false'
+        corretude = 0
+        if label == labelDoMelhorResultado:
+            correto = 'true'
+            corretude = float(melhorResultado-piorResultado)/melhorResultado
+            numeroDeAnalisesCorretas+=1
+        numeroDeAnalises+=1
+        print 'teste n = ' + str(k) + '. Correto = ' + correto + '. Corretude = ' + str(float(corretude)) + '. Label indicada = ' + str(labelDoMelhorResultado) + '. Label real = ' + str(label)
+    
+    print 'resultado'
+    print str(numeroDeAnalisesCorretas) + '/' + str(numeroDeAnalises) + ' = ' + str(float(numeroDeAnalisesCorretas)/numeroDeAnalises)
+        
+        
 
 
+redes = criarRedes(784,9)
 
+redes = treinarRedes(redes)
 
-rede = Rede(16,2)
-rede.treinarRede(hOne)
-rede.treinarRede(hTwo)
-rede.treinarRede(hThree)
-
-rede.testeDeEntrada(hOne,0)
-rede.testeDeEntrada(hTwo,0)
-rede.testeDeEntrada(hThree,0)
-rede.testeDeEntrada(teste,0)
-
-
-
+testarRedes(redes,100)
