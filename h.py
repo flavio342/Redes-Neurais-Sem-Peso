@@ -3,6 +3,7 @@ import random
 import math
 from process_input import *
 import operator
+import math
 
 class Rede:
 
@@ -134,8 +135,7 @@ def treinarRedes(redes, training_data):
 
         redes[str(label)].treinarRede(pixelsArray,treshHold)
 
-        if(k%1000==0):
-            print 'rede ' + str(label) + ' treinada. n = ' + str(k)
+        
 
     f = open("rede_treinada.txt","w") 
     for key in redes:
@@ -153,6 +153,73 @@ def treinarRedes(redes, training_data):
     f.close()
 
     return redes
+
+def treinarRedesArduino(redes, training_data):
+
+    #training_data = list(read(dataset='training',path='.'))
+
+    for k in range(0,len(training_data)):
+        label, pixels = training_data[k]
+
+        """pixelsArray = []
+        for i in range(0,pixels.shape[0]):
+            for j in range(0,pixels.shape[1]):
+                pixelsArray.append(pixels[i,j])"""
+
+        pixelsArray = pixels
+        
+        somaDosPixels = 0
+        nOfPixels = 0
+        for i in range(0,len(pixelsArray)):
+            somaDosPixels+=pixelsArray[i]
+            if(pixelsArray[i] >0):
+                nOfPixels+=1
+
+        treshHold = math.sqrt(somaDosPixels/nOfPixels)
+
+        redes[str(label)].treinarRede(pixelsArray,treshHold)
+
+        if(k%1000==0):
+            print 'rede ' + str(label) + ' treinada. n = ' + str(k)
+
+    f = open("rede_treinada_arduino.txt","w") 
+    for key in redes:
+        j = 0
+        keys = {"front" : 0,"back":1,"left":2,"right":3,"idle":4}
+        for neuronio in redes[key].neuronios:
+            
+            f.write("short indices" + key + str(j) +"[" + str(len(neuronio.indicesDeEntradas)) + "] = {")
+            for i in range(0,len(neuronio.indicesDeEntradas)):
+                f.write(str(neuronio.indicesDeEntradas[i]))
+                if(i<len(neuronio.indicesDeEntradas)-1):
+                    f.write(",")
+            f.write("};\n")
+            f.write("redes[" + str(keys[key]) + "]->neuronios[" + str(j) + "]->setIndicesDeEntradas(" + str(len(neuronio.indicesDeEntradas)) + ",indices" + key + str(j) + ");\n")
+
+            f.write("String keys" + key + str(j) + "[" + str(len(neuronio.tabelaDeDados)) + "] = {")
+            
+            k=0
+            for tabelaKey in neuronio.tabelaDeDados:
+                f.write("\"" + tabelaKey + "\"")
+                if(k<len(neuronio.tabelaDeDados)-1):
+                    f.write(",")
+                k+=1
+            f.write("};\n")
+            k=0
+            f.write("short values" + key + str(j) + "[" + str(len(neuronio.tabelaDeDados)) + "] = {")
+            for tabelaKey in neuronio.tabelaDeDados:
+                f.write(str(neuronio.tabelaDeDados[tabelaKey]))
+                if(k<len(neuronio.tabelaDeDados)-1):
+                    f.write(",")
+                k+=1
+            f.write("};\n")
+            f.write("redes[" + str(keys[key]) + "]->neuronios[" + str(j) + "]->setTabelaDeDados(" + str(len(neuronio.tabelaDeDados)) + ",keys" + key + str(j) + ",values" + key + str(j) + ");\n")
+            j+=1
+    f.close()
+
+    return redes
+    
+    
 
 def definirBleachingDasRedes(redes):
 
@@ -215,10 +282,7 @@ def testarRedes(redes,limiteDoBleaching,testing_data):
         else:
             corretude = 1
         numeroDeAnalises+=1
-        if(k%1000==0):
-            print resultadosDic
-            print  str(k) + ' - Correto = ' + correto + '. probabilidade = ' + str(corretude) + '.  (' + str(labelDoMelhorResultado) + '/' + str(label) + '/' + str(labelDoSegundoMelhorResultado) + ')'
-            print '\n'
+      
     
     print 'resultado'
     print str(numeroDeAnalisesCorretas) + '/' + str(numeroDeAnalises) + ' = ' + str(float(numeroDeAnalisesCorretas)/numeroDeAnalises)
@@ -265,8 +329,8 @@ def lerInput(name):
         values = values.split(",")
         v = []
         for i in range(0,len(values)):
-            for j in range(0,1024):
-                if j < int(values[i]):
+            for j in range(0,5):
+                if j < math.pow(int(values[i]),1.0/4):
                     v.append(1)
                 else:
                     v.append(0)
@@ -283,18 +347,31 @@ r = random.randint(0,len(testing_data))
 label, pixels = testing_data[r]
 show(pixels)"""
 
-redes = criarRedes(6144,50)
+
+    
 
 
-mode = "test"
-if mode != "test":
+
+mode = "a"
+
+
+
+redes = criarRedes(30,15)
+if mode == "a":
+    inputArray = lerInput("treina")
+    redes = treinarRedesArduino(redes,inputArray)
+elif mode != "test":
     inputArray = lerInput("treina")
     redes = treinarRedes(redes,inputArray)
+    limiteDoBleaching = definirBleachingDasRedes(redes)
+    testarRedes(redes,limiteDoBleaching,inputArray)
 else:
     inputArray = lerInput("teste")
     redes = treinarRedesDoArquivo(redes)
     limiteDoBleaching = definirBleachingDasRedes(redes)
     testarRedes(redes,limiteDoBleaching,inputArray)
+
+
 
 
 
