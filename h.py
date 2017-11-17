@@ -181,40 +181,100 @@ def treinarRedesArduino(redes, training_data):
 
         if(k%1000==0):
             print 'rede ' + str(label) + ' treinada. n = ' + str(k)
+            
+    keys = {"front" : 0,"back":1,"left":2,"right":3,"idle":4}
+    
+    f = open("rede_treinada_arduino.txt","w")
+    f.write("const PROGMEM String labels[5] = {\"front\",\"back\",\"left\",\"right\",\"idle\"};\n")
+    f.write("const PROGMEM int nNeuronios = " + str(nNeuronios) + ";\n")
+    f.write("const PROGMEM int nIndicesDeEntradas = " + str(nIndicesDeEntradas) + ";\n")
+    
+    indicesDeEntradas = "const PROGMEM int indicesDeEntradas[5][" + str(nNeuronios) + "][" + str(nIndicesDeEntradas) + "] = {"
+    nDados = "const PROGMEM int nDados[5][" + str(nNeuronios) + "] = {"
 
-    f = open("rede_treinada_arduino.txt","w") 
+    bigNTabelaDeDados = -1
     for key in redes:
+        for neuronio in redes[key].neuronios:
+            if len(neuronio.tabelaDeDados) > bigNTabelaDeDados:
+                bigNTabelaDeDados = len(neuronio.tabelaDeDados)
+    
+    tabelaDeDadosKeys = "const PROGMEM long long int tabelaDeDadosKeys[5][" + str(nNeuronios) + "][" + str(bigNTabelaDeDados) + "] = {"
+    tabelaDeDadosValues = "const PROGMEM int tabelaDeDadosValues[5][" + str(nNeuronios) + "][" + str(bigNTabelaDeDados) + "]= {"
+    
+    for r, key in enumerate(redes):
         j = 0
-        keys = {"front" : 0,"back":1,"left":2,"right":3,"idle":4}
+        indicesDeEntradas+="{"
+        nDados+="{"
+        tabelaDeDadosKeys+="{"
+        tabelaDeDadosValues+="{"
         for neuronio in redes[key].neuronios:
             
-            f.write("short indices" + key + str(j) +"[" + str(len(neuronio.indicesDeEntradas)) + "] = {")
+            indicesDeEntradas+="{"
             for i in range(0,len(neuronio.indicesDeEntradas)):
-                f.write(str(neuronio.indicesDeEntradas[i]))
+                indicesDeEntradas+= str(neuronio.indicesDeEntradas[i])
                 if(i<len(neuronio.indicesDeEntradas)-1):
-                    f.write(",")
-            f.write("};\n")
-            f.write("redes[" + str(keys[key]) + "]->neuronios[" + str(j) + "]->setIndicesDeEntradas(" + str(len(neuronio.indicesDeEntradas)) + ",indices" + key + str(j) + ");\n")
+                    indicesDeEntradas+=","
+            indicesDeEntradas+="}"
+            if j < len(redes[key].neuronios)-1:
+                indicesDeEntradas+=","
 
-            f.write("String keys" + key + str(j) + "[" + str(len(neuronio.tabelaDeDados)) + "] = {")
+            nDados+= str(len(neuronio.tabelaDeDados))
+            if j < len(redes[key].neuronios)-1:
+                nDados+=","
             
             k=0
+            tabelaDeDadosKeys+="{"
             for tabelaKey in neuronio.tabelaDeDados:
-                f.write("\"" + tabelaKey + "\"")
-                if(k<len(neuronio.tabelaDeDados)-1):
-                    f.write(",")
-                k+=1
-            f.write("};\n")
+                tabelaDeDadosKeys+= str(int(tabelaKey, 2))
+                if(k<bigNTabelaDeDados-1):
+                    tabelaDeDadosKeys+=","
+                k+=1   
+            for x in range(k,bigNTabelaDeDados):
+                tabelaDeDadosKeys+="0"
+                if(x<bigNTabelaDeDados-1):
+                    tabelaDeDadosKeys+=","
             k=0
-            f.write("short values" + key + str(j) + "[" + str(len(neuronio.tabelaDeDados)) + "] = {")
+
+            tabelaDeDadosKeys+="}"
+            if j < len(redes[key].neuronios)-1:
+                tabelaDeDadosKeys+=","
+            
+            tabelaDeDadosValues+="{"
             for tabelaKey in neuronio.tabelaDeDados:
-                f.write(str(neuronio.tabelaDeDados[tabelaKey]))
-                if(k<len(neuronio.tabelaDeDados)-1):
-                    f.write(",")
+                tabelaDeDadosValues+= str(neuronio.tabelaDeDados[tabelaKey])
+                if(k<bigNTabelaDeDados-1):
+                    tabelaDeDadosValues+=","
                 k+=1
-            f.write("};\n")
-            f.write("redes[" + str(keys[key]) + "]->neuronios[" + str(j) + "]->setTabelaDeDados(" + str(len(neuronio.tabelaDeDados)) + ",keys" + key + str(j) + ",values" + key + str(j) + ");\n")
+            for x in range(k,bigNTabelaDeDados):
+                tabelaDeDadosValues+="0"
+                if(x<bigNTabelaDeDados-1):
+                    tabelaDeDadosValues+=","
+
+            tabelaDeDadosValues+="}"
+            if j < len(redes[key].neuronios)-1:
+                tabelaDeDadosValues+=","
+          
             j+=1
+
+        nDados+="}"    
+        indicesDeEntradas+="}"
+        tabelaDeDadosKeys+="}"
+        tabelaDeDadosValues+="}"
+        if r < 4:
+            nDados+=","
+            indicesDeEntradas+=","
+            tabelaDeDadosKeys+=","
+            tabelaDeDadosValues+=","
+
+     
+    indicesDeEntradas+="};\n"
+    nDados+="};\n"
+    tabelaDeDadosKeys+="};\n"
+    tabelaDeDadosValues+="};\n"
+    f.write(indicesDeEntradas)
+    f.write(nDados)
+    f.write(tabelaDeDadosKeys)
+    f.write(tabelaDeDadosValues)
     f.close()
 
     return redes
@@ -329,8 +389,8 @@ def lerInput(name):
         values = values.split(",")
         v = []
         for i in range(0,len(values)):
-            for j in range(0,5):
-                if j < math.pow(int(values[i]),1.0/4):
+            for j in range(0,rawInputSize):
+                if j < int(values[i])/rawInputFactor:
                     v.append(1)
                 else:
                     v.append(0)
@@ -347,16 +407,18 @@ r = random.randint(0,len(testing_data))
 label, pixels = testing_data[r]
 show(pixels)"""
 
-
-    
-
-
-
-mode = "a"
-
+rawInputSize = 32
+rawInputFactor = 32
+nTotalEntradas = rawInputSize*5    
+nIndicesDeEntradas = 25
+nNeuronios = nTotalEntradas/nIndicesDeEntradas
 
 
-redes = criarRedes(30,15)
+mode = "test"
+
+
+
+redes = criarRedes(nTotalEntradas,nIndicesDeEntradas)
 if mode == "a":
     inputArray = lerInput("treina")
     redes = treinarRedesArduino(redes,inputArray)
