@@ -13,6 +13,8 @@ const PROGMEM int TE = A3; //Sensor Trás Esquerda
 
 int limiteDoBleaching;
 
+int entrada[INPUT_SIZE];
+
 void setup() {
   Serial.begin(9600);
   limiteDoBleaching = definirBleachingDasRedes();
@@ -24,7 +26,6 @@ void setup() {
 void loop() {
   
   Serial.println("Loop");
-  int entrada[IMPUT_SIZE];
   int inputs[6];
   inputs[0] = analogRead(FC);
   inputs[1] = analogRead(FD);
@@ -34,8 +35,8 @@ void loop() {
   inputs[5] = analogRead(TE);
 
   int k = 0;
-  for (int i = 0; i < 5; i++) {
-    for (int j = 0; j < SIGNAL_SIZE[0]; j++, k++) {
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < SIGNAL_SIZE; j++, k++) {
       //SQUARE ROOT OF SIGNAL_SIZE
       if (j < inputs[i]/INPUT_FACTOR) {
         entrada[k] = 1;
