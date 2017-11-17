@@ -1,4 +1,4 @@
-#include <MemoryFree.h>
+//#include <MemoryFree.h>
 
 #include <math.h>
 #include "teste.h"
@@ -15,13 +15,14 @@ int limiteDoBleaching;
 
 void setup() {
   Serial.begin(9600);
-  //limiteDoBleaching = definirBleachingDasRedes();
-  //Serial.println("Bleaching Definido");
-  Serial.println(pgm_get_far_address(SIGNAL_SIZE));
+  limiteDoBleaching = definirBleachingDasRedes();
+  Serial.println("Bleaching definido");
+  Serial.println(limiteDoBleaching);
+  Serial.flush();
 }
 
 void loop() {
-  /*
+  
   Serial.println("Loop");
   int entrada[IMPUT_SIZE];
   int inputs[6];
@@ -34,7 +35,7 @@ void loop() {
 
   int k = 0;
   for (int i = 0; i < 5; i++) {
-    for (int j = 0; j < SIGNAL_SIZE; j++, k++) {
+    for (int j = 0; j < SIGNAL_SIZE[0]; j++, k++) {
       //SQUARE ROOT OF SIGNAL_SIZE
       if (j < inputs[i]/INPUT_FACTOR) {
         entrada[k] = 1;
@@ -44,9 +45,10 @@ void loop() {
     }
   }
 
+  Serial.println("Testando");
   String resultado = testarRedes(limiteDoBleaching, entrada);
   Serial.print(resultado);
   Serial.println();
-  delay(500);*/
+  delay(500);
 }
 
