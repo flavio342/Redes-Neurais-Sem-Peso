@@ -24,6 +24,7 @@ class Rede:
             
 
     def __init__(self,nTotalDeEntradas,nEntradasPorNeuronio,label):
+        random.seed(1)
         entradas = []
         for i in range(nTotalDeEntradas):
             entradas.append(i)
@@ -72,7 +73,6 @@ class Rede:
                 somaHits += neuronio.tabelaDeDados[i]
                 if(neuronio.tabelaDeDados[i] > 0):
                     nHits+=1"""
-            
         return somaHits/nHits
 
     def testeDeEntrada(self,entrada,limiteDoBleaching):
@@ -80,6 +80,7 @@ class Rede:
         resultado = 0
 
         for neuronio in self.neuronios:
+            
             coordenadaNaTabela = ""
             
             for i in range(len(neuronio.indicesDeEntradas)):
@@ -88,7 +89,9 @@ class Rede:
                 else:
                     coordenadaNaTabela += '0'
 
+
             if coordenadaNaTabela in neuronio.tabelaDeDados:
+           
                 if neuronio.tabelaDeDados[coordenadaNaTabela] > limiteDoBleaching:
                     resultado+=1
 
@@ -186,8 +189,8 @@ def treinarRedesArduino(redes, training_data):
     
     f = open("rede_treinada_arduino.txt","w")
     f.write("const PROGMEM String labels[5] = {\"front\",\"back\",\"left\",\"right\",\"idle\"};\n")
-    f.write("const PROGMEM int nNeuronios = " + str(nNeuronios) + ";\n")
-    f.write("const PROGMEM int nIndicesDeEntradas = " + str(nIndicesDeEntradas) + ";\n")
+    f.write("const PROGMEM int nNeuronios[] = {" + str(nNeuronios) + "};\n")
+    f.write("const PROGMEM int nIndicesDeEntradas[] = {" + str(nIndicesDeEntradas) + "};\n")
     
     indicesDeEntradas = "const PROGMEM int indicesDeEntradas[5][" + str(nNeuronios) + "][" + str(nIndicesDeEntradas) + "] = {"
     nDados = "const PROGMEM int nDados[5][" + str(nNeuronios) + "] = {"
@@ -315,6 +318,7 @@ def testarRedes(redes,limiteDoBleaching,testing_data):
         keys = ["front","back","left","right","idle"]
         for key in keys:
             resultado = redes[key].testeDeEntrada(pixelsArray,limiteDoBleaching)
+           
             resultadoDic = { key: resultado }
             resultadosDic.update(resultadoDic)
             if resultado > melhorResultado:
@@ -384,6 +388,7 @@ def lerInput(name):
     count = 0
     while(line != "-"):
         data = line.split(".")
+     
         label = data[0]
         values = data[1]
         values = values.split(",")
@@ -399,7 +404,22 @@ def lerInput(name):
         line = f.readline()
     return inputArray        
         
-        
+def inputTest():
+    values = [405,679,763,486,759,789]
+    v = []
+    inputArray = []
+    for i in range(0,len(values)):
+        for j in range(0,rawInputSize):
+            if j < int(values[i])/rawInputFactor:
+                v.append(1)
+            else:
+                v.append(0)
+    inputArray.append(("back",v))
+    vs = ""
+    for i in range(0,len(v)):
+        vs += str(v[i])
+    return inputArray
+    
     
 
 """testing_data = list(read(dataset='testing',path='.'))
@@ -409,17 +429,23 @@ show(pixels)"""
 
 rawInputSize = 32
 rawInputFactor = 32
-nTotalEntradas = rawInputSize*5    
+nTotalEntradas = rawInputSize*6    
 nIndicesDeEntradas = 25
 nNeuronios = nTotalEntradas/nIndicesDeEntradas
 
 
-mode = "test"
+mode = "a"
 
 
 
 redes = criarRedes(nTotalEntradas,nIndicesDeEntradas)
-if mode == "a":
+
+if mode == "debug":
+    inputArray = inputTest()
+    redes = treinarRedesDoArquivo(redes)
+    limiteDoBleaching = definirBleachingDasRedes(redes)
+    testarRedes(redes,limiteDoBleaching,inputArray)
+elif mode == "a":
     inputArray = lerInput("treina")
     redes = treinarRedesArduino(redes,inputArray)
 elif mode != "test":

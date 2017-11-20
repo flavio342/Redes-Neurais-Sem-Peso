@@ -11,7 +11,7 @@ Serial.begin(9600);
 }
 
 void loop() {
-  Serial.print("right.");
+  Serial.print("idle.");
   Serial.print(analogRead(FC));
   Serial.print(",");
   Serial.print(analogRead(FD));

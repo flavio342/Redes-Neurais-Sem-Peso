@@ -18,14 +18,13 @@ int entrada[INPUT_SIZE];
 void setup() {
   Serial.begin(9600);
   limiteDoBleaching = definirBleachingDasRedes();
-  Serial.println("Bleaching definido");
+  Serial.print("Bleaching definido - ");
   Serial.println(limiteDoBleaching);
   Serial.flush();
 }
 
 void loop() {
   
-  Serial.println("Loop");
   int inputs[6];
   inputs[0] = analogRead(FC);
   inputs[1] = analogRead(FD);
@@ -46,7 +45,6 @@ void loop() {
     }
   }
 
-  Serial.println("Testando");
   String resultado = testarRedes(limiteDoBleaching, entrada);
   Serial.print(resultado);
   Serial.println();
