@@ -68,14 +68,11 @@ class Rede:
                 somaHits += neuronio.tabelaDeDados[key]
                 if(neuronio.tabelaDeDados[key] > 0):
                     nHits+=1
-            
-            """for i in range(0,len(neuronio.tabelaDeDados)):
-                somaHits += neuronio.tabelaDeDados[i]
-                if(neuronio.tabelaDeDados[i] > 0):
-                    nHits+=1"""
-        return somaHits/nHits
+                    
+        print 'Rede ' + self.label + ' - bleaching = ' + str(somaHits/nHits)
+        self.bleaching = somaHits/nHits
 
-    def testeDeEntrada(self,entrada,limiteDoBleaching):
+    def testeDeEntrada(self,entrada):
 
         resultado = 0
 
@@ -92,7 +89,7 @@ class Rede:
 
             if coordenadaNaTabela in neuronio.tabelaDeDados:
            
-                if neuronio.tabelaDeDados[coordenadaNaTabela] > limiteDoBleaching:
+                if neuronio.tabelaDeDados[coordenadaNaTabela] > self.bleaching:
                     resultado+=1
 
             """indiceNaTabelaDeDados = int(coordenadaNaTabela, 2)
@@ -119,24 +116,8 @@ def treinarRedes(redes, training_data):
 
     for k in range(0,len(training_data)):
         label, pixels = training_data[k]
-
-        """pixelsArray = []
-        for i in range(0,pixels.shape[0]):
-            for j in range(0,pixels.shape[1]):
-                pixelsArray.append(pixels[i,j])"""
-
-        pixelsArray = pixels
         
-        somaDosPixels = 0
-        nOfPixels = 0
-        for i in range(0,len(pixelsArray)):
-            somaDosPixels+=pixelsArray[i]
-            if(pixelsArray[i] >0):
-                nOfPixels+=1
-
-        treshHold = math.sqrt(somaDosPixels/nOfPixels)
-
-        redes[str(label)].treinarRede(pixelsArray,treshHold)
+        redes[str(label)].treinarRede(pixels,1)
 
         
 
@@ -164,23 +145,7 @@ def treinarRedesArduino(redes, training_data):
     for k in range(0,len(training_data)):
         label, pixels = training_data[k]
 
-        """pixelsArray = []
-        for i in range(0,pixels.shape[0]):
-            for j in range(0,pixels.shape[1]):
-                pixelsArray.append(pixels[i,j])"""
-
-        pixelsArray = pixels
-        
-        somaDosPixels = 0
-        nOfPixels = 0
-        for i in range(0,len(pixelsArray)):
-            somaDosPixels+=pixelsArray[i]
-            if(pixelsArray[i] >0):
-                nOfPixels+=1
-
-        treshHold = math.sqrt(somaDosPixels/nOfPixels)
-
-        redes[str(label)].treinarRede(pixelsArray,treshHold)
+        redes[str(label)].treinarRede(pixels,1)
 
         if(k%1000==0):
             print 'rede ' + str(label) + ' treinada. n = ' + str(k)
@@ -188,7 +153,7 @@ def treinarRedesArduino(redes, training_data):
     keys = {"front" : 0,"back":1,"left":2,"right":3,"idle":4}
     
     f = open("rede_treinada_arduino.txt","w")
-    f.write("const PROGMEM String labels[5] = {\"front\",\"back\",\"left\",\"right\",\"idle\"};\n")
+    f.write("const PROGMEM String labels[5] = {\"front\",\"idle\",\"right\",\"back\",\"left\"};\n")
     f.write("const PROGMEM int nNeuronios[] = {" + str(nNeuronios) + "};\n")
     f.write("const PROGMEM int nIndicesDeEntradas[] = {" + str(nIndicesDeEntradas) + "};\n")
     
@@ -197,6 +162,7 @@ def treinarRedesArduino(redes, training_data):
 
     bigNTabelaDeDados = -1
     for key in redes:
+        print key
         for neuronio in redes[key].neuronios:
             if len(neuronio.tabelaDeDados) > bigNTabelaDeDados:
                 bigNTabelaDeDados = len(neuronio.tabelaDeDados)
@@ -289,11 +255,9 @@ def definirBleachingDasRedes(redes):
     somaBleaching = 0
     keys = ["front","back","left","right","idle"]
     for key in keys:
-        somaBleaching += redes[key].definirBleaching()
-    print 'bleaching = ' + str(somaBleaching/len(redes))
-    return somaBleaching/len(redes)
+        redes[key].definirBleaching()
 
-def testarRedes(redes,limiteDoBleaching,testing_data):
+def testarRedes(redes,testing_data):
 
     #testing_data = list(read(dataset='testing',path='.'))
 
@@ -317,7 +281,7 @@ def testarRedes(redes,limiteDoBleaching,testing_data):
         resultadosDic = {}
         keys = ["front","back","left","right","idle"]
         for key in keys:
-            resultado = redes[key].testeDeEntrada(pixelsArray,limiteDoBleaching)
+            resultado = redes[key].testeDeEntrada(pixelsArray)
            
             resultadoDic = { key: resultado }
             resultadosDic.update(resultadoDic)
@@ -427,10 +391,10 @@ r = random.randint(0,len(testing_data))
 label, pixels = testing_data[r]
 show(pixels)"""
 
-rawInputSize = 32
-rawInputFactor = 32
+rawInputSize = 100
+rawInputFactor = 1.5
 nTotalEntradas = rawInputSize*6    
-nIndicesDeEntradas = 25
+nIndicesDeEntradas = 20
 nNeuronios = nTotalEntradas/nIndicesDeEntradas
 
 
@@ -443,21 +407,21 @@ redes = criarRedes(nTotalEntradas,nIndicesDeEntradas)
 if mode == "debug":
     inputArray = inputTest()
     redes = treinarRedesDoArquivo(redes)
-    limiteDoBleaching = definirBleachingDasRedes(redes)
-    testarRedes(redes,limiteDoBleaching,inputArray)
+    definirBleachingDasRedes(redes)
+    testarRedes(redes,inputArray)
 elif mode == "a":
     inputArray = lerInput("treina")
     redes = treinarRedesArduino(redes,inputArray)
 elif mode != "test":
     inputArray = lerInput("treina")
     redes = treinarRedes(redes,inputArray)
-    limiteDoBleaching = definirBleachingDasRedes(redes)
-    testarRedes(redes,limiteDoBleaching,inputArray)
+    definirBleachingDasRedes(redes)
+    testarRedes(redes,inputArray)
 else:
     inputArray = lerInput("teste")
     redes = treinarRedesDoArquivo(redes)
-    limiteDoBleaching = definirBleachingDasRedes(redes)
-    testarRedes(redes,limiteDoBleaching,inputArray)
+    definirBleachingDasRedes(redes)
+    testarRedes(redes,inputArray)
 
 
 
