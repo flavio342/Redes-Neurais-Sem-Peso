@@ -26,19 +26,20 @@ int avgTE = 0;
 int nCalibracoes = 0;
 
 //Carrinho
-int pinoMotorEsquerdo_IN3 = 6;
-int pinoMotorEsquerdo_IN4 = 7;
-int pinoMotorDireito_IN1 = 8;
-int pinoMotorDireito_IN2 = 9;
-int pinoEnableMotorEsquerdo = 11;
-int pinoEnableMotorDireito = 10;
+int pinoMotorEsquerdo_IN3= 6;
+int pinoMotorEsquerdo_IN4= 7;
+int pinoMotorDireito_IN1= 8;
+int pinoMotorDireito_IN2= 9;
+int pinoEnableMotorEsquerdo= 11;
+int pinoEnableMotorDireito= 10;
 
 
 int n = 0;
-int nGap = 5;
+int nGap = 0;
 
 void setup() {
   Serial.begin(9600);
+  
   //Carrinho
   pinMode(pinoMotorEsquerdo_IN3, OUTPUT);
   pinMode(pinoMotorEsquerdo_IN4, OUTPUT);
@@ -47,8 +48,8 @@ void setup() {
   pinMode(pinoEnableMotorEsquerdo, OUTPUT);
   pinMode(pinoEnableMotorDireito, OUTPUT);
   //habilita e definie a velocidade dos dois motores do carrinho
-  analogWrite(pinoEnableMotorEsquerdo, 5);
-  analogWrite(pinoEnableMotorDireito, 250);
+  analogWrite(pinoEnableMotorEsquerdo,150);
+  analogWrite(pinoEnableMotorDireito,150);
 
   limiteDoBleaching = definirBleachingDasRedes();
   Serial.print("Bleaching definido - ");
@@ -84,114 +85,110 @@ void loop() {
     }
 
   } else {
-    int inputs[6];
-    inputs[0] = analogRead(FC) - avgFC;
-    inputs[1] = analogRead(FD) - avgFD;
-    inputs[2] = analogRead(FE) - avgFE;
-    inputs[3] = analogRead(TC) - avgTC;
-    inputs[4] = analogRead(TD) - avgTD;
-    inputs[5] = analogRead(TE) - avgTE;
+
+    n++;
+
+    if (n >= nGap) {
+
+      int inputs[6];
+      inputs[0] = analogRead(FC) - avgFC;
+      inputs[1] = analogRead(FD) - avgFD;
+      inputs[2] = analogRead(FE) - avgFE;
+      inputs[3] = analogRead(TC) - avgTC;
+      inputs[4] = analogRead(TD) - avgTD;
+      inputs[5] = analogRead(TE) - avgTE;
 
 
-    int k = 0;
-    for (int i = 0; i < 6; i++) {
-      for (int j = 0; j < SIGNAL_SIZE; j++, k++) {
-        //SQUARE ROOT OF SIGNAL_SIZE
-        if (j < inputs[i] / INPUT_FACTOR) {
-          entrada[k] = 1;
-        } else {
-          entrada[k] = 0;
+      int k = 0;
+      for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < SIGNAL_SIZE; j++, k++) {
+          //SQUARE ROOT OF SIGNAL_SIZE
+          if (j < inputs[i] / INPUT_FACTOR) {
+            entrada[k] = 1;
+          } else {
+            entrada[k] = 0;
+          }
         }
       }
-    }
 
-    
-    String resultado = testarRedes(limiteDoBleaching, entrada);
-    Serial.println(n);
-    n++;
-    if (resultado == "idle" && n>=nGap) {
-      n=0;
-      pararCarrinho();
-      Serial.println("idle");
-      delay(100);
-    } else if (resultado == "right" && n>=nGap) {
-      n=0;
-      moverCarrinhoParaDireita ();
-      Serial.println("direita");
-      delay (800);
-    } else if (resultado == "left" && n>=nGap) {
-      n=0;
-      moverCarrinhoParaEsquerda();
-      Serial.println("esquerda");
-      delay (800);
-    } else if (resultado == "back" && n>=nGap){
-      n=0;
-      moverCarrinhoParaDireita ();
-      Serial.println("tras");
-      delay (2000);
-    } else if (resultado == "front" && n>=nGap){
-      n=0;
-      moverCarrinhoParaFrente ();
-      Serial.println("frente");
-      delay(100);
+
+      String resultado = testarRedes(limiteDoBleaching, entrada);
+      Serial.println(resultado);
+      if (resultado == "idle") {
+        n = 0;
+        pararCarrinho();
+      } else if (resultado == "right") {
+        n = 0;
+        moverCarrinhoParaEsquerda();
+      } else if (resultado == "left") {
+        n = 0;
+        moverCarrinhoParaDireita ();
+      } else if (resultado == "back") {
+        n = 0;
+        moverCarrinhoParaTras ();
+      } else if (resultado == "front") {
+        n = 0;
+        moverCarrinhoParaFrente ();
+      }
     }
   }
 }
 
 void girarRodaDireitaParaDireita()
 {
-  digitalWrite(pinoMotorDireito_IN1, HIGH);
-  digitalWrite(pinoMotorDireito_IN2, LOW);
+  digitalWrite(pinoMotorDireito_IN1,HIGH);
+  digitalWrite(pinoMotorDireito_IN2,LOW);
 }
 
 void girarRodaDireitaParaEsquerda()
 {
-  digitalWrite(pinoMotorDireito_IN1, LOW);
-  digitalWrite(pinoMotorDireito_IN2, HIGH);
+  digitalWrite(pinoMotorDireito_IN1,LOW);
+  digitalWrite(pinoMotorDireito_IN2,HIGH);
 }
 
 void girarRodaEsquerdaParaDireita()
 {
-  digitalWrite(pinoMotorEsquerdo_IN3, LOW);
-  digitalWrite(pinoMotorEsquerdo_IN4, HIGH);
+  digitalWrite(pinoMotorEsquerdo_IN3,LOW);
+  digitalWrite(pinoMotorEsquerdo_IN4,HIGH);
 }
 
 void girarRodaEsquerdaParaEsquerda()
 {
-  digitalWrite(pinoMotorEsquerdo_IN3, HIGH);
-  digitalWrite(pinoMotorEsquerdo_IN4, LOW);
+  digitalWrite(pinoMotorEsquerdo_IN3,HIGH);
+  digitalWrite(pinoMotorEsquerdo_IN4,LOW);
 }
 
 void pararCarrinho()
 {
-  digitalWrite(pinoMotorDireito_IN1, HIGH);
-  digitalWrite(pinoMotorDireito_IN2, HIGH);
-  digitalWrite(pinoMotorEsquerdo_IN3, HIGH);
-  digitalWrite(pinoMotorEsquerdo_IN4, HIGH);
+  digitalWrite(pinoMotorDireito_IN1,HIGH);
+  digitalWrite(pinoMotorDireito_IN2,HIGH);
+  digitalWrite(pinoMotorEsquerdo_IN3,HIGH);
+  digitalWrite(pinoMotorEsquerdo_IN4,HIGH);
 }
 
 
 void moverCarrinhoParaFrente()
 {
-  girarRodaDireitaParaDireita();
-  girarRodaEsquerdaParaEsquerda();
+ girarRodaDireitaParaDireita();
+ girarRodaEsquerdaParaEsquerda();
 }
 
 void moverCarrinhoParaTras()
 {
-  girarRodaDireitaParaEsquerda();
-  girarRodaEsquerdaParaDireita();
+ girarRodaDireitaParaEsquerda();
+ girarRodaEsquerdaParaDireita();
 }
 
 void moverCarrinhoParaDireita()
 {
-  girarRodaDireitaParaEsquerda();
-  girarRodaEsquerdaParaEsquerda();
+girarRodaDireitaParaEsquerda();
+girarRodaEsquerdaParaEsquerda();
 }
 
 void moverCarrinhoParaEsquerda()
 {
-  girarRodaEsquerdaParaDireita();
-  girarRodaDireitaParaDireita();
+girarRodaEsquerdaParaDireita();
+girarRodaDireitaParaDireita();
 }
+
 

@@ -24,7 +24,7 @@ class Rede:
             
 
     def __init__(self,nTotalDeEntradas,nEntradasPorNeuronio,label):
-        random.seed(1)
+        #random.seed(1)
         entradas = []
         for i in range(nTotalDeEntradas):
             entradas.append(i)
@@ -391,10 +391,10 @@ r = random.randint(0,len(testing_data))
 label, pixels = testing_data[r]
 show(pixels)"""
 
-rawInputSize = 100
-rawInputFactor = 1.5
+rawInputSize = 50
+rawInputFactor = 5
 nTotalEntradas = rawInputSize*6    
-nIndicesDeEntradas = 20
+nIndicesDeEntradas = 35
 nNeuronios = nTotalEntradas/nIndicesDeEntradas
 
 

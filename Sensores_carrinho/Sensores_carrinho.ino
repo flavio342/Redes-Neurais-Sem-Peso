@@ -44,7 +44,7 @@ void loop() {
     }
 
   } else {
-    Serial.print("back.");
+    Serial.print("right.");
     Serial.print(analogRead(FC) - avgFC);
     Serial.print(",");
     Serial.print(analogRead(FD) - avgFD);
