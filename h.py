@@ -391,8 +391,8 @@ r = random.randint(0,len(testing_data))
 label, pixels = testing_data[r]
 show(pixels)"""
 
-rawInputSize = 50
-rawInputFactor = 5
+rawInputSize = 100
+rawInputFactor = 1.5
 nTotalEntradas = rawInputSize*6    
 nIndicesDeEntradas = 35
 nNeuronios = nTotalEntradas/nIndicesDeEntradas

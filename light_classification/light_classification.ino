@@ -119,10 +119,11 @@ void loop() {
         pararCarrinho();
       } else if (resultado == "right") {
         n = 0;
-        moverCarrinhoParaEsquerda();
+        moverCarrinhoParaDireita ();
       } else if (resultado == "left") {
         n = 0;
-        moverCarrinhoParaDireita ();
+        
+        moverCarrinhoParaEsquerda();
       } else if (resultado == "back") {
         n = 0;
         moverCarrinhoParaTras ();
